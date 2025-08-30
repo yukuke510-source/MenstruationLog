@@ -20,7 +20,7 @@ const notion = new Client({ auth: NOTION_TOKEN });
 // ====== Property Names (edit to match DB) ======
 const P = {
   title: 'タイトル',              // Title
-  date: '記録日',                 // Date
+  date: '登録日',                 // Date
   type: '種別',                   // Select: 開始/終了/予定/排卵予定
   cycleDays: '周期日数',          // Number
   avgCycle: '平均周期',           // Number
