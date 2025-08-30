@@ -46,7 +46,11 @@ const addDays = (d, n) => new Date(d.getTime() + n * 86400000);
 
 const setTitle = (v) => ({ title: [{ text: { content: v } }] });
 const setDate = (d) => d ? ({ date: { start: dstr(d) } }) : { date: null };
-const setNum = (n) => (n == null ? { number: null } : { number: n });
+// 値が無いときは 0 を入れる
+const setNum = (n) => {
+  if (n == null || Number.isNaN(n)) return { number: 0 };
+  return { number: n };
+};
 const setSel = (v) => v ? ({ select: { name: v } }) : { select: null };
 const setChk = (b) => ({ checkbox: !!b });
 
