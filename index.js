@@ -22,7 +22,7 @@ const notion = new Client({ auth: NOTION_TOKEN });
 // ====== Desired names (can be overridden by env) ======
 const P = {
   title: process.env.PROP_TITLE || 'タイトル',
-  date: process.env.PROP_DATE || '記録日',
+  date: process.env.PROP_DATE || '登録日',
   type: process.env.PROP_TYPE || '種別',
   cycleDays: process.env.PROP_CYCLE_DAYS || '周期日数',
   avgCycle: process.env.PROP_AVG_CYCLE || '平均周期',
