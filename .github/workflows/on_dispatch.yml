@@ -1,0 +1,28 @@
+name: On Notion Update (repository_dispatch)
+
+on:
+  repository_dispatch:
+    types: [notion-update]
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install deps
+        run: npm install
+      - name: Run script
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+          AVG_WINDOW: ${{ vars.AVG_WINDOW }}
+          AVG_BLEED_WINDOW: ${{ vars.AVG_BLEED_WINDOW }}
+          LUTEAL_DAYS: ${{ vars.LUTEAL_DAYS }}
+          CYCLE_MIN: ${{ vars.CYCLE_MIN }}
+          CYCLE_MAX: ${{ vars.CYCLE_MAX }}
+        run: node index.js
