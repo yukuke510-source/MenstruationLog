@@ -20,7 +20,7 @@ const notion = new Client({ auth: NOTION_TOKEN });
 // ====== Property Names (edit to match DB) ======
 const P = {
   title: 'タイトル',              // Title
-  date: '記録日',                 // Date
+  date: '登録日',                 // Date
   type: '種別',                   // Select: 開始/終了/予定/排卵予定
   cycleDays: '周期日数',          // Number
   avgCycle: '平均周期',           // Number
@@ -46,7 +46,12 @@ const addDays = (d, n) => new Date(d.getTime() + n * 86400000);
 
 const setTitle = (v) => ({ title: [{ text: { content: v } }] });
 const setDate = (d) => d ? ({ date: { start: dstr(d) } }) : { date: null };
-const setNum = (n) => (n == null ? { number: null } : { number: n });
+// 値が無いときは 0 を入れる
+const setNum = (n) => {
+  if (n == null || Number.isNaN(n)) return { number: 0 };
+  return { number: n };
+};
+
 const setSel = (v) => v ? ({ select: { name: v } }) : { select: null };
 const setChk = (b) => ({ checkbox: !!b });
 
