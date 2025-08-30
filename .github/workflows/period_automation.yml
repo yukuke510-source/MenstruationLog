@@ -1,30 +1,32 @@
-name: Notion Period Automation
+name: Notion Period Automation (Daily + Dispatch)
 
 on:
   schedule:
     # JST 00:00 = UTC 15:00
     - cron: "0 15 * * *"
+  repository_dispatch:
+    types: [notion-update]
   workflow_dispatch: {}
 
 jobs:
   run:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Install deps
-        run: npm install
-      - name: Run script
+      - run: npm install
+      - name: Run
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
-          AVG_WINDOW: ${{ vars.AVG_WINDOW }}
-          AVG_BLEED_WINDOW: ${{ vars.AVG_BLEED_WINDOW }}
           LUTEAL_DAYS: ${{ vars.LUTEAL_DAYS }}
-          CYCLE_MIN: ${{ vars.CYCLE_MIN }}
-          CYCLE_MAX: ${{ vars.CYCLE_MAX }}
+          DEFAULT_CYCLE: 28
+          CREATE_PLAN_PAGES: ${{ vars.CREATE_PLAN_PAGES }}
+          EVENT_REASON: ${{ github.event.client_payload.reason }}
+          MIN_TRIGGER_INTERVAL_SEC: ${{ vars.MIN_TRIGGER_INTERVAL_SEC }}
+          STRICT_TEMPLATES: ${{ vars.STRICT_TEMPLATES }}
+          MORNING_END_HOUR: ${{ vars.MORNING_END_HOUR }}
+          AFTERNOON_END_HOUR: ${{ vars.AFTERNOON_END_HOUR }}
         run: node index.js
