@@ -1,4 +1,7 @@
 name: Notion Period Automation (Daily + Issue Trigger)
+permissions:
+  contents: read
+  issues: write
 
 on:
   schedule:
