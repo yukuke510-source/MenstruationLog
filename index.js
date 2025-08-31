@@ -312,16 +312,21 @@ async function main() {
   const avgBleedAll = bleedVals.length ? Math.round(bleedVals.reduce((a,b)=>a+b,0)/bleedVals.length) : 0;
 
   // START updates (window) —— 平均周期は表示用の displayedAvgCycle を書き込む
-  for (const s of starts) {
-    await updatePage(s.id, {
-      [P.cycleDays]: setNum(startCycles.get(s.id) ?? 0),
-      [P.avgCycle]: setNum(displayedAvgCycle),  // ← 0なら28で表示
-      [P.bleedDays]: setNum(0),
-      [P.avgBleed]: setNum(0),
-      [P.nextPeriod]: setDate(null),
-      [P.ovulation]: setDate(null)
-    });
-  }
+for (const s of starts) {
+  const currentAvgCycle = s.raw.properties?.[P.avgCycle]?.number ?? 0; // 既存値を読む
+  const nextAvgCycle = (currentAvgCycle && currentAvgCycle > 0)
+    ? currentAvgCycle                         // 既に入っていれば保持
+    : displayedAvgCycle;                      // 0/空なら今回の平均（0→28済）
+
+  await updatePage(s.id, {
+    [P.cycleDays]: setNum(startCycles.get(s.id) ?? 0),
+    [P.avgCycle]: setNum(nextAvgCycle),
+    [P.bleedDays]: setNum(0),
+    [P.avgBleed]: setNum(0),
+    [P.nextPeriod]: setDate(null),
+    [P.ovulation]: setDate(null)
+  });
+}
 
   // 最新開始に次回/排卵を書き、必要なら予定ページも upsert
   const lastStartAll = startsAll[startsAll.length - 1];
@@ -340,16 +345,22 @@ async function main() {
   }
 
   // END updates (window)
-  for (const { start, end } of pairsWin) {
-    if (!end) continue;
-    const bleed = endBleeds.get(end.id) ?? Math.max(1, daysBetween(end.date, start.date) + 1);
-    await updatePage(end.id, {
-      [P.bleedDays]: setNum(bleed),
-      [P.avgBleed]: setNum(avgBleedAll),
-      [P.nextPeriod]: setDate(null),
-      [P.ovulation]: setDate(null)
-    });
-  }
+for (const { start, end } of pairsWin) {
+  if (!end) continue;
+  const bleed = endBleeds.get(end.id) ?? Math.max(1, daysBetween(end.date, start.date) + 1);
+
+  const currentAvgBleed = end.raw.properties?.[P.avgBleed]?.number ?? 0; // 既存値
+  const nextAvgBleed = (currentAvgBleed && currentAvgBleed > 0)
+    ? currentAvgBleed                     // 既に入っていれば保持
+    : avgBleedAll;                        // 0/空なら今回の平均
+
+  await updatePage(end.id, {
+    [P.bleedDays]: setNum(bleed),
+    [P.avgBleed]: setNum(nextAvgBleed),
+    [P.nextPeriod]: setDate(null),
+    [P.ovulation]: setDate(null)
+  });
+}
 
   // Metrics flags（※ご要望どおり現状のまま・平均は avgCycleAll>0 を基準）
   const lastEndAll = endsAll[endsAll.length - 1];
