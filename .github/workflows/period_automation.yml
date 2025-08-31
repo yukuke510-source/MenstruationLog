@@ -7,8 +7,6 @@ on:
   schedule:
     # JST 00:00 に相当（UTC 15:00）
     - cron: "0 15 * * *"
-  repository_dispatch:
-    types: [notion-update]   # ← Zapier有料プラン用の旧ルート（残してOK）
   workflow_dispatch: {}       # 手動起動
   issues:
     types: [opened]           # 無料Zapierが作るIssueをトリガにする
