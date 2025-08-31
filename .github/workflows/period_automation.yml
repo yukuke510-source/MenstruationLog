@@ -1,32 +1,44 @@
-name: Notion Period Automation (Daily + Dispatch)
+name: Notion Period Automation (Daily + Issue Trigger)
 
 on:
   schedule:
-    # JST 00:00 = UTC 15:00
+    # JST 00:00 に相当（UTC 15:00）
     - cron: "0 15 * * *"
   repository_dispatch:
-    types: [notion-update]
-  workflow_dispatch: {}
+    types: [notion-update]   # ← Zapier有料プラン用の旧ルート（残してOK）
+  workflow_dispatch: {}       # 手動起動
+  issues:
+    types: [opened]           # 無料Zapierが作るIssueをトリガにする
 
 jobs:
   run:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm install
-      - name: Run
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Notion automation
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
-          LUTEAL_DAYS: ${{ vars.LUTEAL_DAYS }}
           DEFAULT_CYCLE: 28
           CREATE_PLAN_PAGES: ${{ vars.CREATE_PLAN_PAGES }}
-          EVENT_REASON: ${{ github.event.client_payload.reason }}
           MIN_TRIGGER_INTERVAL_SEC: ${{ vars.MIN_TRIGGER_INTERVAL_SEC }}
-          STRICT_TEMPLATES: ${{ vars.STRICT_TEMPLATES }}
-          MORNING_END_HOUR: ${{ vars.MORNING_END_HOUR }}
-          AFTERNOON_END_HOUR: ${{ vars.AFTERNOON_END_HOUR }}
+          EVENT_REASON: ${{ github.event.issue.title }} # Issueタイトルを理由に流し込む
         run: node index.js
+
+      - name: Close trigger issue
+        if: ${{ github.event_name == 'issues' }}
+        run: |
+          gh issue close ${{ github.event.issue.number }} -R ${{ github.repository }} -c "Handled by workflow"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
