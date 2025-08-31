@@ -35,6 +35,7 @@ jobs:
           CREATE_PLAN_PAGES: ${{ vars.CREATE_PLAN_PAGES }}
           MIN_TRIGGER_INTERVAL_SEC: ${{ vars.MIN_TRIGGER_INTERVAL_SEC }}
           EVENT_REASON: ${{ github.event.issue.title }} # Issueタイトルを理由に流し込む
+          CYCLE_MODE: ${{ vars.CYCLE_MODE }}
         run: node index.js
 
       - name: Close trigger issue
