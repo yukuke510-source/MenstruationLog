@@ -31,8 +31,8 @@ const P = {
   error: process.env.PROP_ERROR || '入力エラー',
   templateError: process.env.PROP_TEMPLATE_ERROR || 'テンプレ不一致',
   // Metrics flags
-  latestAvgCycle: process.env.PROP_LATEST_AVG_CYCLE || '最新_平均周期',
-  latestAvgBleed: process.env.PROP_LATEST_AVG_BLEED || '最新_平均生理',
+  latestAvgCycle: process.env.PROP_LATEST_AVG_CYCLE || '最新_平均周期日数',
+  latestAvgBleed: process.env.PROP_LATEST_AVG_BLEED || '最新_平均生理日数',
   latestCycle: process.env.PROP_LATEST_CYCLE || '最新_周期日数',
   latestBleed: process.env.PROP_LATEST_BLEED || '最新_生理日数',
   latestStart: process.env.PROP_LATEST_START || '最新開始',
