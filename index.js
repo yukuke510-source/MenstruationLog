@@ -31,8 +31,8 @@ const P = {
   error: process.env.PROP_ERROR || '入力エラー',
   templateError: process.env.PROP_TEMPLATE_ERROR || 'テンプレ不一致',
   // Metrics flags
-  latestAvgCycle: process.env.PROP_LATEST_AVG_CYCLE || '最新_平均周期日数',
-  latestAvgBleed: process.env.PROP_LATEST_AVG_BLEED || '最新_平均生理日数',
+  latestAvgCycle: process.env.PROP_LATEST_AVG_CYCLE || '最新_平均周期',
+  latestAvgBleed: process.env.PROP_LATEST_AVG_BLEED || '最新_平均生理',
   latestCycle: process.env.PROP_LATEST_CYCLE || '最新_周期日数',
   latestBleed: process.env.PROP_LATEST_BLEED || '最新_生理日数',
   latestStart: process.env.PROP_LATEST_START || '最新開始',
@@ -158,6 +158,23 @@ function pairStartsEnds(starts, ends) {
   return pairs;
 }
 
+// upsert for plan pages (avoid duplicates)
+async function upsertPlan(date, kind) {
+  const res = await notion.databases.query({
+    database_id: DB_ID,
+    filter: {
+      and: [
+        { property: P.type, select: { equals: kind } },
+        { property: P.date, date: { equals: dstr(date) } }
+      ]
+    },
+    page_size: 1
+  });
+  if (res.results.length === 0) {
+    await createPage(date, kind);
+  }
+}
+
 async function main() {
   const now = new Date();
   const state = await getStatePage();
@@ -275,6 +292,11 @@ async function main() {
     if (c > 0) cycleVals.push(c);
   }
   const avgCycleAll = cycleVals.length ? Math.round(cycleVals.reduce((a,b)=>a+b,0)/cycleVals.length) : 0;
+
+  // ★表示用：0ならDEFAULT_CYCLE（既定28）に置き換え
+  const displayedAvgCycle = avgCycleAll > 0 ? avgCycleAll : DEFAULT_CYCLE;
+
+  // 次回計算用：0なら28日で計算（従来どおり）
   const baseCycle = avgCycleAll > 0 ? avgCycleAll : (DEFAULT_CYCLE > 0 ? DEFAULT_CYCLE : 28);
 
   // Bleed (START -> first END)
@@ -289,26 +311,30 @@ async function main() {
   }
   const avgBleedAll = bleedVals.length ? Math.round(bleedVals.reduce((a,b)=>a+b,0)/bleedVals.length) : 0;
 
-  // START updates (window)
+  // START updates (window) —— 平均周期は表示用の displayedAvgCycle を書き込む
   for (const s of starts) {
     await updatePage(s.id, {
       [P.cycleDays]: setNum(startCycles.get(s.id) ?? 0),
-      [P.avgCycle]: setNum(avgCycleAll),
+      [P.avgCycle]: setNum(displayedAvgCycle),  // ← 0なら28で表示
       [P.bleedDays]: setNum(0),
       [P.avgBleed]: setNum(0),
       [P.nextPeriod]: setDate(null),
       [P.ovulation]: setDate(null)
     });
   }
+
+  // 最新開始に次回/排卵を書き、必要なら予定ページも upsert
   const lastStartAll = startsAll[startsAll.length - 1];
   if (!fromDate || starts.some(st => st.id === lastStartAll?.id)) {
     if (lastStartAll) {
       const nextPeriod = addDays(lastStartAll.date, baseCycle);
       const ovulation = addDays(nextPeriod, -LUTEAL_DAYS);
       await updatePage(lastStartAll.id, { [P.nextPeriod]: setDate(nextPeriod), [P.ovulation]: setDate(ovulation) });
-      if (EVENT_REASON === 'start-updated' && CREATE_PLAN_PAGES) {
-        await createPage(nextPeriod, TYPE.PLAN);
-        await createPage(ovulation, TYPE.OVU);
+
+      // Zap 有無に関係なく、フラグに従い予定ページを upsert 作成
+      if (CREATE_PLAN_PAGES) {
+        await upsertPlan(nextPeriod, TYPE.PLAN);
+        await upsertPlan(ovulation, TYPE.OVU);
       }
     }
   }
@@ -325,18 +351,16 @@ async function main() {
     });
   }
 
-  // Metrics flags (latest & non-zero)
+  // Metrics flags（※ご要望どおり現状のまま・平均は avgCycleAll>0 を基準）
   const lastEndAll = endsAll[endsAll.length - 1];
   if (lastStartAll) await updatePage(lastStartAll.id, { [P.latestStart]: setChk(true) });
   if (lastEndAll)   await updatePage(lastEndAll.id,   { [P.latestEnd]: setChk(true) });
 
-  // latest non-zero cycle
   for (let i = startsAll.length - 1; i >= 0; i--) {
     const s = startsAll[i];
     const cyc = startCycles.get(s.id) ?? 0;
     if (cyc > 0) { await updatePage(s.id, { [P.latestCycle]: setChk(true) }); break; }
   }
-  // latest non-zero bleed
   for (let i = endsAll.length - 1; i >= 0; i--) {
     const e = endsAll[i];
     const b = endBleeds.get(e.id) ?? 0;
