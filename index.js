@@ -280,30 +280,34 @@ async function main() {
   const cycleVals = [];
 
   if (CYCLE_MODE === 'start_to_start') {
-    // 前回 START → 今回 START
+    // 前回 START → 今回 START（★初回は既定周期を採用し平均にも含める）
     let prevS = null;
     for (const s of startsSorted) {
-      const c = prevS ? Math.max(0, daysBetween(s.date, prevS.date)) : 0;
+      const c = prevS
+        ? Math.max(0, daysBetween(s.date, prevS.date))
+        : (DEFAULT_CYCLE > 0 ? DEFAULT_CYCLE : 28); // 初回は既定周期
       startCycles.set(s.id, c);
       if (c > 0) cycleVals.push(c);
       prevS = s;
     }
   } else {
-    // 従来: 前回 END → 今回 START
+    // 従来: 前回 END → 今回 START（★初回は既定周期を採用し平均にも含める）
     const prevEndForStart = new Map();
     let lastEndBefore = null;
     let eIdx = 0;
-    const endsSorted = [...endsAll].sort((a,b)=>a.date-b.date);
+    const endsSorted2 = [...endsAll].sort((a,b)=>a.date-b.date);
     for (const s of startsSorted) {
-      while (eIdx < endsSorted.length && endsSorted[eIdx].date < s.date) {
-        lastEndBefore = endsSorted[eIdx];
+      while (eIdx < endsSorted2.length && endsSorted2[eIdx].date < s.date) {
+        lastEndBefore = endsSorted2[eIdx];
         eIdx++;
       }
       prevEndForStart.set(s.id, lastEndBefore);
     }
     for (const s of startsSorted) {
       const pe = prevEndForStart.get(s.id);
-      const c = pe ? Math.max(0, daysBetween(s.date, pe.date)) : 0;
+      const c = pe
+        ? Math.max(0, daysBetween(s.date, pe.date))
+        : (DEFAULT_CYCLE > 0 ? DEFAULT_CYCLE : 28); // 初回は既定周期
       startCycles.set(s.id, c);
       if (c > 0) cycleVals.push(c);
     }
