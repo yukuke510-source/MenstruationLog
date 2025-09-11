@@ -45,7 +45,11 @@ const P = {
 const TYPE = { START:'開始', END:'終了', PLAN:'生理予定', OVU:'排卵予定', DAILY:'日次記録' };
 
 /** ===== Notion client ===== */
-const notion = new Client({ auth: NOTION_TOKEN });
+const notion = new Client({
+  auth: NOTION_TOKEN,
+  notionVersion: '2025-09-03'
+});
+
 
 /** ===== Helpers ===== */
 function toJST(d) { return new Date(d.getTime() + 9 * 3600 * 1000); }
