@@ -185,6 +185,8 @@ async function upsertPlan(date, kind) {
 
 async function main() {
   const now = new Date();
+    console.log(">>> DB_ID:", DB_ID);
+  console.log(">>> DB_ID length:", DB_ID?.length);
   const state = await getStatePage();
 
   // Debounce（Zap/Issue等の明示トリガ時のみ）
