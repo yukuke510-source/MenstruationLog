@@ -1,3 +1,5 @@
+console.log("NOTION_DATABASE_ID:", process.env.NOTION_DATABASE_ID);
+console.log("NOTION_TOKEN head:", process.env.NOTION_TOKEN?.slice(0, 6));
 import 'dotenv/config';
 import { Client } from '@notionhq/client';
 
