@@ -1,5 +1,3 @@
-console.log("NOTION_DATABASE_ID:", process.env.NOTION_DATABASE_ID);
-console.log("NOTION_TOKEN head:", process.env.NOTION_TOKEN?.slice(0, 6));
 import 'dotenv/config';
 import { Client } from '@notionhq/client';
 
@@ -47,11 +45,7 @@ const P = {
 const TYPE = { START:'開始', END:'終了', PLAN:'生理予定', OVU:'排卵予定', DAILY:'日次記録' };
 
 /** ===== Notion client ===== */
-const notion = new Client({
-  auth: NOTION_TOKEN,
-  notionVersion: '2025-09-03'
-});
-
+const notion = new Client({ auth: NOTION_TOKEN });
 
 /** ===== Helpers ===== */
 function toJST(d) { return new Date(d.getTime() + 9 * 3600 * 1000); }
@@ -185,8 +179,6 @@ async function upsertPlan(date, kind) {
 
 async function main() {
   const now = new Date();
-    console.log(">>> DB_ID:", DB_ID);
-  console.log(">>> DB_ID length:", DB_ID?.length);
   const state = await getStatePage();
 
   // Debounce（Zap/Issue等の明示トリガ時のみ）
